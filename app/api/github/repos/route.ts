@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         // Check if it's an organization
         const orgResponse = await fetch(`https://api.github.com/orgs/${owner}`, {
           headers: {
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            Authorization: `Bearer ${githubToken}`,
             Accept: 'application/vnd.github.v3+json',
           },
         })
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
       const response = await fetch(apiUrl, {
         headers: {
-          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+          Authorization: `Bearer ${githubToken}`,
           Accept: 'application/vnd.github.v3+json',
         },
       })
