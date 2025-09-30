@@ -128,6 +128,19 @@ export async function executeClaudeInSandbox(
   selectedModel?: string,
 ): Promise<AgentExecutionResult> {
   try {
+    // Get user's Anthropic API key from database
+    const anthropicApiKey = await getUserApiKey(userId, 'anthropic')
+    
+    if (!anthropicApiKey) {
+      await logger.error('Anthropic API key not configured. Please add it in Settings.')
+      return {
+        success: false,
+        error: 'Anthropic API key not configured. Please add it in Settings.',
+        cliName: 'claude',
+        changesDetected: false,
+      }
+    }
+
     // Executing Claude CLI with instruction
 
     // Check if Claude CLI is available and get version info
@@ -167,18 +180,8 @@ export async function executeClaudeInSandbox(
       }
     }
 
-    // Check if ANTHROPIC_API_KEY is available
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return {
-        success: false,
-        error: 'ANTHROPIC_API_KEY environment variable is required but not found',
-        cliName: 'claude',
-        changesDetected: false,
-      }
-    }
-
     // Execute Claude CLI with proper environment and instruction
-    const envPrefix = `ANTHROPIC_API_KEY="${process.env.ANTHROPIC_API_KEY}"`
+    const envPrefix = `ANTHROPIC_API_KEY="${anthropicApiKey}"`
 
     // Log what we're trying to do
     const modelToUse = selectedModel || 'claude-sonnet-4-5-20250929'
@@ -197,7 +200,7 @@ export async function executeClaudeInSandbox(
     }
 
     // Log the command we're about to execute (with redacted API key)
-    const redactedCommand = fullCommand.replace(process.env.ANTHROPIC_API_KEY!, '[REDACTED]')
+    const redactedCommand = fullCommand.replace(anthropicApiKey, '[REDACTED]')
     await logger.command(redactedCommand)
     if (logger) {
       await logger.command(redactedCommand)

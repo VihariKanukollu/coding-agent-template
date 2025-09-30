@@ -121,7 +121,7 @@ export async function executeCodexInSandbox(
       cmd: 'codex',
       args: ['--version'],
       env: {
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
+        OPENAI_API_KEY: apiKey,
         HOME: '/home/vercel-sandbox',
       },
       sudo: false,
@@ -219,7 +219,7 @@ log_requests = true
 
     // Use the same pattern as other working agents (Claude, etc.)
     // Execute with environment variables using sh -c like Claude does
-    const envPrefix = `AI_GATEWAY_API_KEY="${process.env.AI_GATEWAY_API_KEY}" HOME="/home/vercel-sandbox" CI="true"`
+    const envPrefix = `AI_GATEWAY_API_KEY="${apiKey}" HOME="/home/vercel-sandbox" CI="true"`
     const fullCommand = `${envPrefix} codex exec --dangerously-bypass-approvals-and-sandbox "${instruction}"`
 
     // Use the standard runCommandInSandbox helper like other agents
