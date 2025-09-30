@@ -1,14 +1,27 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { getUserApiKey } from '@/lib/user-keys'
 
 export async function GET() {
   try {
-    if (!process.env.GITHUB_TOKEN) {
-      return NextResponse.json({ error: 'GitHub token not configured' }, { status: 500 })
+    // Get authenticated user
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    
+    if (!authUser?.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    // Get user's GitHub token
+    const githubToken = await getUserApiKey(authUser.id, 'github')
+    
+    if (!githubToken) {
+      return NextResponse.json({ error: 'GitHub token not configured. Please add it in Settings.' }, { status: 400 })
     }
 
     const response = await fetch('https://api.github.com/user', {
       headers: {
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+        Authorization: `Bearer ${githubToken}`,
         Accept: 'application/vnd.github.v3+json',
       },
     })
@@ -17,12 +30,12 @@ export async function GET() {
       throw new Error(`GitHub API error: ${response.status}`)
     }
 
-    const user = await response.json()
+    const githubUser = await response.json()
 
     return NextResponse.json({
-      login: user.login,
-      name: user.name,
-      avatar_url: user.avatar_url,
+      login: githubUser.login,
+      name: githubUser.name,
+      avatar_url: githubUser.avatar_url,
     })
   } catch (error) {
     console.error('Error fetching GitHub user:', error)

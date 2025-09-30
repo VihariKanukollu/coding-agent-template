@@ -4,6 +4,8 @@ import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AppLayoutWrapper } from '@/components/app-layout-wrapper'
+import { UserProvider } from '@/lib/user-store/provider'
+import { createClient } from '@/lib/supabase/server'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -16,22 +18,27 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Coding Agent Template',
+  title: 'Browzy Code - AI Coding Agent',
   description:
-    'AI-powered coding agent template supporting Claude Code, OpenAI Codex CLI, Cursor CLI, and opencode with Vercel Sandbox',
+    'Multi-agent AI coding platform by Browzy.ai - Supporting Claude, Codex, Cursor, and opencode agents for automated code generation',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AppLayoutWrapper>{children}</AppLayoutWrapper>
-          <Toaster />
+          <UserProvider initialUser={user}>
+            <AppLayoutWrapper>{children}</AppLayoutWrapper>
+            <Toaster />
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -14,6 +14,7 @@ export type { AgentExecutionResult } from '../types'
 // Main agent execution function
 export async function executeAgentInSandbox(
   sandbox: Sandbox,
+  userId: string,
   instruction: string,
   agentType: AgentType,
   logger: TaskLogger,
@@ -32,16 +33,16 @@ export async function executeAgentInSandbox(
   }
   switch (agentType) {
     case 'claude':
-      return executeClaudeInSandbox(sandbox, instruction, logger, selectedModel)
+      return executeClaudeInSandbox(sandbox, userId, instruction, logger, selectedModel)
 
     case 'codex':
-      return executeCodexInSandbox(sandbox, instruction, logger, selectedModel)
+      return executeCodexInSandbox(sandbox, userId, instruction, logger, selectedModel)
 
     case 'cursor':
-      return executeCursorInSandbox(sandbox, instruction, logger, selectedModel)
+      return executeCursorInSandbox(sandbox, userId, instruction, logger, selectedModel)
 
     case 'opencode':
-      return executeOpenCodeInSandbox(sandbox, instruction, logger, selectedModel)
+      return executeOpenCodeInSandbox(sandbox, userId, instruction, logger, selectedModel)
 
     default:
       return {

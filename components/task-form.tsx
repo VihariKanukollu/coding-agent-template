@@ -18,6 +18,7 @@ import {
 import { Loader2, ArrowUp, Settings, X } from 'lucide-react'
 import { Claude, Codex, Cursor, OpenCode } from '@/components/logos'
 import { getInstallDependencies, setInstallDependencies, getMaxDuration, setMaxDuration } from '@/lib/utils/cookies'
+import { BrowzyIcon } from '@/components/icons/browzy'
 
 interface GitHubRepo {
   name: string
@@ -54,6 +55,7 @@ const CODING_AGENTS = [
 // Model options for each agent
 const AGENT_MODELS = {
   claude: [
+    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
     { value: 'claude-sonnet-4-20250514', label: 'Sonnet 4' },
     { value: 'claude-opus-4-1-20250805', label: 'Opus 4.1' },
   ],
@@ -70,6 +72,7 @@ const AGENT_MODELS = {
     { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
     { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
     { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
     { value: 'claude-sonnet-4-20250514', label: 'Sonnet 4' },
     { value: 'claude-opus-4-1-20250805', label: 'Opus 4.1' },
   ],
@@ -78,6 +81,7 @@ const AGENT_MODELS = {
     { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
     { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
     { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
     { value: 'claude-sonnet-4-20250514', label: 'Sonnet 4' },
     { value: 'claude-opus-4-1-20250805', label: 'Opus 4.1' },
   ],
@@ -85,7 +89,7 @@ const AGENT_MODELS = {
 
 // Default models for each agent
 const DEFAULT_MODELS = {
-  claude: 'claude-sonnet-4-20250514',
+  claude: 'claude-sonnet-4-5-20250929',
   codex: 'openai/gpt-5',
   cursor: 'auto',
   opencode: 'gpt-5',
@@ -269,26 +273,12 @@ export function TaskForm({
   return (
     <div className="w-full max-w-2xl">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">Coding Agent Template</h1>
+        <div className="flex items-center justify-center mb-4">
+          <BrowzyIcon className="size-12 mr-3" />
+          <h1 className="text-4xl font-bold">Browzy_Code</h1>
+        </div>
         <p className="text-lg text-muted-foreground mb-2">
-          Multi-agent AI coding platform powered by{' '}
-          <a
-            href="https://vercel.com/docs/sandbox"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:no-underline"
-          >
-            Vercel Sandbox
-          </a>{' '}
-          and{' '}
-          <a
-            href="https://vercel.com/docs/ai-gateway"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:no-underline"
-          >
-            AI Gateway
-          </a>
+          Multi-agent AI coding platform
         </p>
       </div>
 

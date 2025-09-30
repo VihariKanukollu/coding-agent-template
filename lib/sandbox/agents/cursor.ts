@@ -3,6 +3,7 @@ import { runCommandInSandbox } from '../commands'
 import { AgentExecutionResult } from '../types'
 import { redactSensitiveInfo } from '@/lib/utils/logging'
 import { TaskLogger } from '@/lib/utils/task-logger'
+import { getUserApiKey } from '@/lib/user-keys'
 
 // Helper function to run command and collect
 async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[], logger: TaskLogger) {
@@ -24,11 +25,15 @@ async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[
 
 export async function executeCursorInSandbox(
   sandbox: Sandbox,
+  userId: string,
   instruction: string,
   logger: TaskLogger,
   selectedModel?: string,
 ): Promise<AgentExecutionResult> {
   try {
+    // Get user's Cursor API key (optional - Cursor can work without it)
+    const cursorApiKey = await getUserApiKey(userId, 'cursor')
+
     // Executing Cursor CLI with instruction
 
     // Install Cursor CLI using the official installer
@@ -122,14 +127,9 @@ export async function executeCursorInSandbox(
       }
     }
 
-    // Check if CURSOR_API_KEY is available
-    if (!process.env.CURSOR_API_KEY) {
-      return {
-        success: false,
-        error: 'CURSOR_API_KEY not found. Please set the API key to use Cursor agent.',
-        cliName: 'cursor',
-        changesDetected: false,
-      }
+    // Check if Cursor API key is available (optional)
+    if (!cursorApiKey) {
+      await logger.info('Cursor API key not configured - agent may have limited functionality')
     }
 
     // Execute Cursor CLI with the instruction using print mode and force flag for file modifications
@@ -222,9 +222,9 @@ export async function executeCursorInSandbox(
     await sandbox.runCommand({
       cmd: '/home/vercel-sandbox/.local/bin/cursor-agent',
       args: args,
-      env: {
-        CURSOR_API_KEY: process.env.CURSOR_API_KEY!,
-      },
+      env: cursorApiKey ? {
+        CURSOR_API_KEY: cursorApiKey,
+      } : {},
       sudo: false,
       detached: true,
       stdout: captureStdout,

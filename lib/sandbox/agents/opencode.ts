@@ -3,6 +3,7 @@ import { runCommandInSandbox } from '../commands'
 import { AgentExecutionResult } from '../types'
 import { redactSensitiveInfo } from '@/lib/utils/logging'
 import { TaskLogger } from '@/lib/utils/task-logger'
+import { getUserApiKey } from '@/lib/user-keys'
 
 // Helper function to run command and log it
 async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[], logger: TaskLogger) {
@@ -42,17 +43,22 @@ async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[
 
 export async function executeOpenCodeInSandbox(
   sandbox: Sandbox,
+  userId: string,
   instruction: string,
   logger: TaskLogger,
   selectedModel?: string,
 ): Promise<AgentExecutionResult> {
   try {
+    // Get user's API keys (OpenAI or Anthropic)
+    const openaiApiKey = await getUserApiKey(userId, 'openai')
+    const anthropicApiKey = await getUserApiKey(userId, 'anthropic')
+    
     // Executing OpenCode with instruction
     await logger.info('Starting OpenCode agent execution...')
 
-    // Check if we have required environment variables for OpenCode
-    if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-      const errorMsg = 'OpenAI API key or Anthropic API key is required for OpenCode agent'
+    // Check if we have required API keys for OpenCode
+    if (!openaiApiKey && !anthropicApiKey) {
+      const errorMsg = 'OpenAI API key or Anthropic API key is required for OpenCode agent. Please add one in Settings.'
       await logger.error(errorMsg)
       return {
         success: false,
@@ -132,7 +138,7 @@ export async function executeOpenCodeInSandbox(
     // OpenCode supports multiple providers, we'll configure the available ones
     const authSetupCommands: string[] = []
 
-    if (process.env.OPENAI_API_KEY) {
+    if (openaiApiKey) {
       console.log('Configuring OpenAI provider...')
       if (logger) {
         await logger.info('Configuring OpenAI provider...')
@@ -141,7 +147,7 @@ export async function executeOpenCodeInSandbox(
       // Use opencode auth to configure OpenAI
       const openaiAuthResult = await runCommandInSandbox(sandbox, 'sh', [
         '-c',
-        `echo "${process.env.OPENAI_API_KEY}" | opencode auth add openai`,
+        `echo "${openaiApiKey}" | opencode auth add openai`,
       ])
 
       if (!openaiAuthResult.success) {
@@ -154,7 +160,7 @@ export async function executeOpenCodeInSandbox(
       }
     }
 
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (anthropicApiKey) {
       console.log('Configuring Anthropic provider...')
       if (logger) {
         await logger.info('Configuring Anthropic provider...')
@@ -163,7 +169,7 @@ export async function executeOpenCodeInSandbox(
       // Use opencode auth to configure Anthropic
       const anthropicAuthResult = await runCommandInSandbox(sandbox, 'sh', [
         '-c',
-        `echo "${process.env.ANTHROPIC_API_KEY}" | opencode auth add anthropic`,
+        `echo "${anthropicApiKey}" | opencode auth add anthropic`,
       ])
 
       if (!anthropicAuthResult.success) {
@@ -196,11 +202,11 @@ export async function executeOpenCodeInSandbox(
     // Set up environment variables for the OpenCode execution
     const envVars: Record<string, string> = {}
 
-    if (process.env.OPENAI_API_KEY) {
-      envVars.OPENAI_API_KEY = process.env.OPENAI_API_KEY
+    if (openaiApiKey) {
+      envVars.OPENAI_API_KEY = openaiApiKey
     }
-    if (process.env.ANTHROPIC_API_KEY) {
-      envVars.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
+    if (anthropicApiKey) {
+      envVars.ANTHROPIC_API_KEY = anthropicApiKey
     }
 
     // Build environment variables string for shell command

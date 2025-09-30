@@ -12,6 +12,7 @@ export type LogEntry = z.infer<typeof logEntrySchema>
 
 export const tasks = pgTable('tasks', {
   id: text('id').primaryKey(),
+  userId: text('user_id'),
   prompt: text('prompt').notNull(),
   repoUrl: text('repo_url'),
   selectedAgent: text('selected_agent').default('claude'),
@@ -36,6 +37,7 @@ export const tasks = pgTable('tasks', {
 // Manual Zod schemas for validation
 export const insertTaskSchema = z.object({
   id: z.string().optional(),
+  userId: z.string().optional(),
   prompt: z.string().min(1, 'Prompt is required'),
   repoUrl: z.string().url('Must be a valid URL').optional(),
   selectedAgent: z.enum(['claude', 'codex', 'cursor', 'opencode']).default('claude'),
@@ -55,6 +57,7 @@ export const insertTaskSchema = z.object({
 
 export const selectTaskSchema = z.object({
   id: z.string(),
+  userId: z.string().nullable(),
   prompt: z.string(),
   repoUrl: z.string().nullable(),
   selectedAgent: z.string().nullable(),

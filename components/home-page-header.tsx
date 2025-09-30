@@ -16,10 +16,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { MoreHorizontal, RefreshCw, Trash2 } from 'lucide-react'
+import { MoreHorizontal, RefreshCw, Trash2, Settings } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { VERCEL_DEPLOY_URL } from '@/lib/constants'
+import { SettingsModal } from '@/components/settings-modal'
+import { useUser } from '@/lib/user-store/provider'
+import { BrowzyIcon } from '@/components/icons/browzy'
+import Link from 'next/link'
 
 interface HomePageHeaderProps {
   selectedOwner: string
@@ -30,12 +33,16 @@ interface HomePageHeaderProps {
 
 export function HomePageHeader({ selectedOwner, selectedRepo, onOwnerChange, onRepoChange }: HomePageHeaderProps) {
   const { toggleSidebar, refreshTasks } = useTasks()
+  const { user } = useUser()
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [deleteCompleted, setDeleteCompleted] = useState(true)
   const [deleteFailed, setDeleteFailed] = useState(true)
   const [deleteStopped, setDeleteStopped] = useState(true)
+  
+  const isLoggedIn = !!user
 
   const handleRefreshRepos = async () => {
     setIsRefreshing(true)
@@ -92,23 +99,8 @@ export function HomePageHeader({ selectedOwner, selectedRepo, onOwnerChange, onR
     }
   }
 
-  const actions = (
+  const actions = isLoggedIn ? (
     <div className="flex items-center gap-2">
-      {/* Deploy to Vercel Button */}
-      <Button
-        asChild
-        variant="outline"
-        size="sm"
-        className="h-8 px-3 text-xs bg-black text-white border-black hover:bg-black/90 dark:bg-white dark:text-black dark:border-white dark:hover:bg-white/90"
-      >
-        <a href={VERCEL_DEPLOY_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
-          <svg viewBox="0 0 76 65" className="h-3 w-3" fill="currentColor">
-            <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-          </svg>
-          Deploy to Vercel
-        </a>
-      </Button>
-
       {/* More Actions Menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -117,6 +109,10 @@ export function HomePageHeader({ selectedOwner, selectedRepo, onOwnerChange, onR
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setShowSettingsModal(true)}>
+            <Settings className="h-4 w-4 mr-2" />
+            API Keys Settings
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleRefreshRepos} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh Repositories
@@ -128,16 +124,30 @@ export function HomePageHeader({ selectedOwner, selectedRepo, onOwnerChange, onR
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+  ) : (
+    <Link
+      href="https://www.browzy.ai/auth"
+      className="text-base text-muted-foreground hover:text-foreground transition-colors"
+    >
+      Login
+    </Link>
   )
 
   const leftActions = (
-    <RepoSelector
-      selectedOwner={selectedOwner}
-      selectedRepo={selectedRepo}
-      onOwnerChange={onOwnerChange}
-      onRepoChange={onRepoChange}
-      size="sm"
-    />
+    <div className="flex items-center gap-3">
+      <Link href="/" className="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
+        <BrowzyIcon className="size-6" />
+        <span className="font-semibold text-sm hidden sm:inline">Browzy.ai</span>
+      </Link>
+      <span className="text-muted-foreground">/</span>
+      <RepoSelector
+        selectedOwner={selectedOwner}
+        selectedRepo={selectedRepo}
+        onOwnerChange={onOwnerChange}
+        onRepoChange={onRepoChange}
+        size="sm"
+      />
+    </div>
   )
 
   return (
@@ -212,6 +222,8 @@ export function HomePageHeader({ selectedOwner, selectedRepo, onOwnerChange, onR
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SettingsModal open={showSettingsModal} onOpenChange={setShowSettingsModal} />
     </>
   )
 }

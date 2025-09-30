@@ -25,6 +25,8 @@ interface TasksContextType {
     repoUrl: string
     selectedAgent: string
     selectedModel: string
+    installDependencies: boolean
+    maxDuration: number
   }) => { id: string; optimisticTask: Task }
 }
 
@@ -190,14 +192,19 @@ export function AppLayout({ children, initialSidebarWidth, initialSidebarOpen }:
     repoUrl: string
     selectedAgent: string
     selectedModel: string
+    installDependencies: boolean
+    maxDuration: number
   }) => {
     const id = nanoid()
     const optimisticTask: Task = {
       id,
+      userId: null,
       prompt: taskData.prompt,
       repoUrl: taskData.repoUrl,
       selectedAgent: taskData.selectedAgent,
       selectedModel: taskData.selectedModel,
+      installDependencies: taskData.installDependencies,
+      maxDuration: taskData.maxDuration,
       status: 'pending',
       progress: 0,
       logs: [],

@@ -3,6 +3,7 @@ import { runCommandInSandbox } from '../commands'
 import { AgentExecutionResult } from '../types'
 import { redactSensitiveInfo } from '@/lib/utils/logging'
 import { TaskLogger } from '@/lib/utils/task-logger'
+import { getUserApiKey } from '@/lib/user-keys'
 
 // Helper function to run command and log it
 async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[], logger: TaskLogger) {
@@ -24,11 +25,25 @@ async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[
 
 export async function executeCodexInSandbox(
   sandbox: Sandbox,
+  userId: string,
   instruction: string,
   logger: TaskLogger,
   selectedModel?: string,
 ): Promise<AgentExecutionResult> {
   try {
+    // Get user's OpenAI/AI Gateway API key
+    const apiKey = (await getUserApiKey(userId, 'openai')) || (await getUserApiKey(userId, 'ai_gateway'))
+    
+    if (!apiKey) {
+      await logger.error('OpenAI or AI Gateway API key not configured. Please add it in Settings.')
+      return {
+        success: false,
+        error: 'OpenAI or AI Gateway API key not configured. Please add it in Settings.',
+        cliName: 'codex',
+        changesDetected: false,
+      }
+    }
+
     // Executing Codex CLI with instruction
 
     // Install Codex CLI using npm
@@ -58,18 +73,7 @@ export async function executeCodexInSandbox(
       }
     }
 
-    // Set up authentication - we'll use API key method since we're in a sandbox
-    if (!process.env.AI_GATEWAY_API_KEY) {
-      return {
-        success: false,
-        error: 'AI Gateway API key not found. Please set AI_GATEWAY_API_KEY environment variable.',
-        cliName: 'codex',
-        changesDetected: false,
-      }
-    }
-
     // Validate API key format - can be either OpenAI (sk-) or Vercel (vck_)
-    const apiKey = process.env.AI_GATEWAY_API_KEY
     const isOpenAIKey = apiKey?.startsWith('sk-')
     const isVercelKey = apiKey?.startsWith('vck_')
 

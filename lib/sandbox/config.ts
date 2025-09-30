@@ -1,22 +1,19 @@
-export function validateEnvironmentVariables(selectedAgent: string = 'claude') {
+// Platform-level environment validation (Vercel credentials only)
+// User-specific API keys are now validated when fetching from database
+export function validateEnvironmentVariables() {
   const errors: string[] = []
 
-  // Check for required environment variables based on selected agent
-  if (selectedAgent === 'claude' && !process.env.ANTHROPIC_API_KEY) {
-    errors.push('ANTHROPIC_API_KEY is required for Claude CLI')
+  // Check for Vercel sandbox credentials (platform-level)
+  if (!process.env.VERCEL_TEAM_ID) {
+    errors.push('VERCEL_TEAM_ID is required for sandbox creation')
   }
 
-  if (selectedAgent === 'cursor' && !process.env.CURSOR_API_KEY) {
-    errors.push('CURSOR_API_KEY is required for Cursor CLI')
+  if (!process.env.VERCEL_PROJECT_ID) {
+    errors.push('VERCEL_PROJECT_ID is required for sandbox creation')
   }
 
-  if (selectedAgent === 'codex' && !process.env.OPENAI_API_KEY) {
-    errors.push('OPENAI_API_KEY is required for Codex CLI')
-  }
-
-  // Check for GitHub token for private repositories
-  if (!process.env.GITHUB_TOKEN) {
-    errors.push('GITHUB_TOKEN is required for repository access')
+  if (!process.env.VERCEL_TOKEN) {
+    errors.push('VERCEL_TOKEN is required for sandbox creation')
   }
 
   return {
@@ -25,8 +22,8 @@ export function validateEnvironmentVariables(selectedAgent: string = 'claude') {
   }
 }
 
-export function createAuthenticatedRepoUrl(repoUrl: string): string {
-  if (!process.env.GITHUB_TOKEN) {
+export function createAuthenticatedRepoUrl(repoUrl: string, githubToken?: string): string {
+  if (!githubToken) {
     return repoUrl
   }
 
@@ -34,7 +31,7 @@ export function createAuthenticatedRepoUrl(repoUrl: string): string {
     const url = new URL(repoUrl)
     if (url.hostname === 'github.com') {
       // Add GitHub token for authentication
-      url.username = process.env.GITHUB_TOKEN
+      url.username = githubToken
       url.password = 'x-oauth-basic'
     }
     return url.toString()

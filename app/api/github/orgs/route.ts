@@ -1,14 +1,27 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { getUserApiKey } from '@/lib/user-keys'
 
 export async function GET() {
   try {
-    if (!process.env.GITHUB_TOKEN) {
-      return NextResponse.json({ error: 'GitHub token not configured' }, { status: 500 })
+    // Get authenticated user
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    
+    if (!authUser?.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    // Get user's GitHub token
+    const githubToken = await getUserApiKey(authUser.id, 'github')
+    
+    if (!githubToken) {
+      return NextResponse.json({ error: 'GitHub token not configured. Please add it in Settings.' }, { status: 400 })
     }
 
     const response = await fetch('https://api.github.com/user/orgs', {
       headers: {
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+        Authorization: `Bearer ${githubToken}`,
         Accept: 'application/vnd.github.v3+json',
       },
     })

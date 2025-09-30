@@ -221,20 +221,27 @@ export function RepoSelector({
           <SelectValue placeholder={loadingOwners && !selectedOwner ? 'Loading...' : 'Owner'} />
         </SelectTrigger>
         <SelectContent>
-          {owners.map((owner) => (
-            <SelectItem key={owner.login} value={owner.login}>
-              <div className="flex items-center gap-2">
-                <Image
-                  src={owner.avatar_url}
-                  alt={owner.login}
-                  width={16}
-                  height={16}
-                  className="w-4 h-4 rounded-full"
-                />
-                <span>{owner.login}</span>
-              </div>
-            </SelectItem>
-          ))}
+          {owners.length === 0 && !loadingOwners ? (
+            <div className="p-4 text-sm text-center text-muted-foreground">
+              <p className="mb-2">No GitHub accounts found</p>
+              <p className="text-xs">Configure your GitHub token in settings</p>
+            </div>
+          ) : (
+            owners.map((owner) => (
+              <SelectItem key={owner.login} value={owner.login}>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={owner.avatar_url}
+                    alt={owner.login}
+                    width={16}
+                    height={16}
+                    className="w-4 h-4 rounded-full"
+                  />
+                  <span>{owner.login}</span>
+                </div>
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
 
@@ -276,7 +283,12 @@ export function RepoSelector({
                   />
                 </div>
               )}
-              {filteredRepos.length === 0 && repoFilter ? (
+              {repos.length === 0 && !loadingRepos ? (
+                <div className="p-4 text-sm text-center text-muted-foreground">
+                  <p className="mb-2">No repositories found</p>
+                  <p className="text-xs">This account has no accessible repositories</p>
+                </div>
+              ) : filteredRepos.length === 0 && repoFilter ? (
                 <div className="p-2 text-sm text-muted-foreground text-center">
                   No repositories match &quot;{repoFilter}&quot;
                 </div>

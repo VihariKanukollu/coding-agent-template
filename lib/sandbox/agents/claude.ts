@@ -3,6 +3,7 @@ import { runCommandInSandbox } from '../commands'
 import { AgentExecutionResult } from '../types'
 import { redactSensitiveInfo } from '@/lib/utils/logging'
 import { TaskLogger } from '@/lib/utils/task-logger'
+import { getUserApiKey } from '@/lib/user-keys'
 
 // Helper function to run command and collect logs
 async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[], logger: TaskLogger) {
@@ -55,9 +56,18 @@ async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[
 
 export async function installClaudeCLI(
   sandbox: Sandbox,
+  userId: string,
   logger: TaskLogger,
   selectedModel?: string,
 ): Promise<{ success: boolean }> {
+  // Get user's Anthropic API key
+  const anthropicApiKey = await getUserApiKey(userId, 'anthropic')
+  
+  if (!anthropicApiKey) {
+    await logger.error('Anthropic API key not configured. Please add it in Settings.')
+    return { success: false }
+  }
+
   // Install Claude CLI
   await logger.info('Installing Claude CLI...')
   const claudeInstall = await runCommandInSandbox(sandbox, 'npm', ['install', '-g', '@anthropic-ai/claude-code'])
@@ -66,7 +76,7 @@ export async function installClaudeCLI(
     await logger.info('Claude CLI installed successfully')
 
     // Authenticate Claude CLI with API key
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (anthropicApiKey) {
       await logger.info('Authenticating Claude CLI...')
 
       // Create Claude config directory (use $HOME instead of ~)
@@ -74,10 +84,10 @@ export async function installClaudeCLI(
 
       // Create config file directly using absolute path
       // Use selectedModel if provided, otherwise fall back to default
-      const modelToUse = selectedModel || 'claude-3-5-sonnet-20241022'
+      const modelToUse = selectedModel || 'claude-sonnet-4-5-20250929'
       const configFileCmd = `mkdir -p $HOME/.config/claude && cat > $HOME/.config/claude/config.json << 'EOF'
 {
-  "api_key": "${process.env.ANTHROPIC_API_KEY}",
+  "api_key": "${anthropicApiKey}",
   "default_model": "${modelToUse}"
 }
 EOF`
@@ -92,7 +102,7 @@ EOF`
       // Verify authentication
       const verifyAuth = await runCommandInSandbox(sandbox, 'sh', [
         '-c',
-        `ANTHROPIC_API_KEY=${process.env.ANTHROPIC_API_KEY} claude --version`,
+        `ANTHROPIC_API_KEY=${anthropicApiKey} claude --version`,
       ])
       if (verifyAuth.success) {
         await logger.info('Claude CLI authentication verified')
@@ -112,6 +122,7 @@ EOF`
 
 export async function executeClaudeInSandbox(
   sandbox: Sandbox,
+  userId: string,
   instruction: string,
   logger: TaskLogger,
   selectedModel?: string,
@@ -132,7 +143,7 @@ export async function executeClaudeInSandbox(
     if (!cliCheck.success) {
       // Claude CLI not found, try to install it
       // Claude CLI not found, installing
-      const installResult = await installClaudeCLI(sandbox, logger, selectedModel)
+      const installResult = await installClaudeCLI(sandbox, userId, logger, selectedModel)
 
       if (!installResult.success) {
         return {
@@ -170,7 +181,7 @@ export async function executeClaudeInSandbox(
     const envPrefix = `ANTHROPIC_API_KEY="${process.env.ANTHROPIC_API_KEY}"`
 
     // Log what we're trying to do
-    const modelToUse = selectedModel || 'claude-3-5-sonnet-20241022'
+    const modelToUse = selectedModel || 'claude-sonnet-4-5-20250929'
     if (logger) {
       await logger.info(
         `Attempting to execute Claude CLI with model ${modelToUse} and instruction: ${instruction.substring(0, 100)}...`,

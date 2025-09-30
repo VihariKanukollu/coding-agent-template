@@ -7,6 +7,7 @@ import { redactSensitiveInfo } from '@/lib/utils/logging'
 import { TaskLogger } from '@/lib/utils/task-logger'
 import { detectPackageManager, installDependencies } from './package-manager'
 import { registerSandbox } from './sandbox-registry'
+import { getUserApiKey } from '@/lib/user-keys'
 
 // Helper function to run command and log it
 async function runAndLogCommand(sandbox: Sandbox, command: string, args: string[], logger: TaskLogger) {
@@ -45,26 +46,34 @@ export async function createSandbox(config: SandboxConfig, logger: TaskLogger): 
       await config.onProgress(20, 'Validating environment variables...')
     }
 
-    // Validate required environment variables
-    const envValidation = validateEnvironmentVariables(config.selectedAgent)
-    if (!envValidation.valid) {
-      throw new Error(envValidation.error!)
+    // Fetch user's GitHub token for repository authentication
+    const githubToken = await getUserApiKey(config.userId, 'github')
+    if (!githubToken) {
+      throw new Error('GitHub token not configured. Please add it in Settings.')
     }
-    await logger.info('Environment variables validated')
 
     // Handle private repository authentication
-    const authenticatedRepoUrl = createAuthenticatedRepoUrl(config.repoUrl)
+    const authenticatedRepoUrl = createAuthenticatedRepoUrl(config.repoUrl, githubToken)
     await logger.info('Added GitHub authentication to repository URL')
 
     // For initial clone, only use existing branch names, not AI-generated ones
     // AI-generated branch names will be created later inside the sandbox
     const branchNameForEnv = config.existingBranchName
 
+    // Fetch user's Vercel credentials with fallback to platform defaults
+    const userVercelKeys = await import('@/lib/user-keys').then(m => 
+      m.getUserApiKeys(config.userId, ['vercel_team_id', 'vercel_project_id', 'vercel_token'])
+    )
+    
+    const vercelTeamId = userVercelKeys.vercel_team_id || process.env.VERCEL_TEAM_ID!
+    const vercelProjectId = userVercelKeys.vercel_project_id || process.env.VERCEL_PROJECT_ID!
+    const vercelToken = userVercelKeys.vercel_token || process.env.VERCEL_TOKEN!
+
     // Create sandbox with proper source configuration
     const sandboxConfig = {
-      teamId: process.env.VERCEL_TEAM_ID!,
-      projectId: process.env.VERCEL_PROJECT_ID!,
-      token: process.env.VERCEL_TOKEN!,
+      teamId: vercelTeamId,
+      projectId: vercelProjectId,
+      token: vercelToken,
       source: {
         type: 'git' as const,
         url: authenticatedRepoUrl,
@@ -361,17 +370,16 @@ export async function createSandbox(config: SandboxConfig, logger: TaskLogger): 
     await logger.info(`Available branches: ${gitBranchDebug.output || 'No branches listed'}`)
 
     const gitRemoteDebug = await runCommandInSandbox(sandbox, 'git', ['remote', '-v'])
-    await logger.info(`Git remotes: ${gitRemoteDebug.output || 'No remotes configured'}`)
+    const redactedRemotes = gitRemoteDebug.output ? redactSensitiveInfo(gitRemoteDebug.output) : 'No remotes configured'
+    await logger.info(`Git remotes: ${redactedRemotes}`)
 
-    // Configure Git to use GitHub token for authentication
-    if (process.env.GITHUB_TOKEN) {
-      await logger.info('Configuring Git authentication with GitHub token')
-      await runCommandInSandbox(sandbox, 'git', ['config', 'credential.helper', 'store'])
+    // Configure Git to use GitHub token for authentication (using token from earlier in function)
+    await logger.info('Configuring Git authentication with GitHub token')
+    await runCommandInSandbox(sandbox, 'git', ['config', 'credential.helper', 'store'])
 
-      // Create credentials file with GitHub token
-      const credentialsContent = `https://${process.env.GITHUB_TOKEN}:x-oauth-basic@github.com`
-      await runCommandInSandbox(sandbox, 'sh', ['-c', `echo "${credentialsContent}" > ~/.git-credentials`])
-    }
+    // Create credentials file with GitHub token
+    const gitCredentials = `https://${githubToken}:x-oauth-basic@github.com`
+    await runCommandInSandbox(sandbox, 'sh', ['-c', `echo "${gitCredentials}" > ~/.git-credentials`])
 
     let branchName: string
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { TaskForm } from '@/components/task-form'
 import { HomePageHeader } from '@/components/home-page-header'
+import { SetupCheck } from '@/components/setup-check'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTasks } from '@/components/app-layout'
@@ -91,26 +92,28 @@ export function HomePageContent({
   }
 
   return (
-    <div className="flex-1 bg-background">
-      <div className="mx-auto p-3">
-        <HomePageHeader
-          selectedOwner={selectedOwner}
-          selectedRepo={selectedRepo}
-          onOwnerChange={handleOwnerChange}
-          onRepoChange={handleRepoChange}
-        />
-
-        <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-          <TaskForm
-            onSubmit={handleTaskSubmit}
-            isSubmitting={isSubmitting}
+    <SetupCheck>
+      <div className="flex-1 bg-background">
+        <div className="mx-auto p-3">
+          <HomePageHeader
             selectedOwner={selectedOwner}
             selectedRepo={selectedRepo}
-            initialInstallDependencies={initialInstallDependencies}
-            initialMaxDuration={initialMaxDuration}
+            onOwnerChange={handleOwnerChange}
+            onRepoChange={handleRepoChange}
           />
+
+          <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+            <TaskForm
+              onSubmit={handleTaskSubmit}
+              isSubmitting={isSubmitting}
+              selectedOwner={selectedOwner}
+              selectedRepo={selectedRepo}
+              initialInstallDependencies={initialInstallDependencies}
+              initialMaxDuration={initialMaxDuration}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </SetupCheck>
   )
 }

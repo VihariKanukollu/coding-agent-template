@@ -18,7 +18,6 @@ import {
 import { MoreHorizontal, RotateCcw, Trash2, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { VERCEL_DEPLOY_URL } from '@/lib/constants'
 import { useTasks } from '@/components/app-layout'
 import { Claude, Codex, Cursor, OpenCode } from '@/components/logos'
 
@@ -36,6 +35,7 @@ const CODING_AGENTS = [
 // Model options for each agent
 const AGENT_MODELS = {
   claude: [
+    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
     { value: 'claude-sonnet-4-20250514', label: 'Sonnet 4' },
     { value: 'claude-opus-4-1-20250805', label: 'Opus 4.1' },
   ],
@@ -51,6 +51,7 @@ const AGENT_MODELS = {
     { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
     { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
     { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
     { value: 'claude-sonnet-4-20250514', label: 'Sonnet 4' },
     { value: 'claude-opus-4-1-20250805', label: 'Opus 4.1' },
   ],
@@ -59,6 +60,7 @@ const AGENT_MODELS = {
     { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
     { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
     { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
     { value: 'claude-sonnet-4-20250514', label: 'Sonnet 4' },
     { value: 'claude-opus-4-1-20250805', label: 'Opus 4.1' },
   ],
@@ -166,21 +168,6 @@ export function TaskActions({ task }: TaskActionsProps) {
   return (
     <>
       <div className="flex items-center gap-2">
-        {/* Deploy to Vercel Button */}
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="h-8 px-3 text-xs bg-black text-white border-black hover:bg-black/90 dark:bg-white dark:text-black dark:border-white dark:hover:bg-white/90"
-        >
-          <a href={VERCEL_DEPLOY_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
-            <svg viewBox="0 0 76 65" className="h-3 w-3" fill="currentColor">
-              <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-            </svg>
-            Deploy to Vercel
-          </a>
-        </Button>
-
         {/* More Actions Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

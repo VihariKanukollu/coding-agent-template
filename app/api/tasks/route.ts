@@ -11,11 +11,27 @@ import { eq, desc, or } from 'drizzle-orm'
 import { createInfoLog } from '@/lib/utils/logging'
 import { createTaskLogger } from '@/lib/utils/task-logger'
 import { generateBranchName, createFallbackBranchName } from '@/lib/utils/branch-name-generator'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const allTasks = await db.select().from(tasks).orderBy(desc(tasks.createdAt))
-    return NextResponse.json({ tasks: allTasks })
+    // Get authenticated user
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    
+    // If not authenticated, return empty tasks (allow browsing without login but can't create)
+    if (!authUser?.id) {
+      return NextResponse.json({ tasks: [] })
+    }
+
+    // Only return tasks for the authenticated user
+    const userTasks = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.userId, authUser.id))
+      .orderBy(desc(tasks.createdAt))
+    
+    return NextResponse.json({ tasks: userTasks })
   } catch (error) {
     console.error('Error fetching tasks:', error)
     return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 })
@@ -26,22 +42,32 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
+    // Get authenticated user ID
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
     // Use provided ID or generate a new one
     const taskId = body.id || generateId(12)
     const validatedData = insertTaskSchema.parse({
       ...body,
       id: taskId,
+      userId: user.id,
       status: 'pending',
       progress: 0,
       logs: [],
     })
 
-    // Insert the task into the database - ensure id is definitely present
+    // Insert the task into the database - ensure id and userId are present
     const [newTask] = await db
       .insert(tasks)
       .values({
         ...validatedData,
-        id: taskId, // Ensure id is always present
+        id: taskId,
+        userId: user.id,
       })
       .returning()
 
@@ -112,6 +138,7 @@ export async function POST(request: NextRequest) {
     // Process the task asynchronously with timeout
     processTaskWithTimeout(
       newTask.id,
+      user.id,
       validatedData.prompt,
       validatedData.repoUrl || '',
       validatedData.selectedAgent || 'claude',
@@ -129,6 +156,7 @@ export async function POST(request: NextRequest) {
 
 async function processTaskWithTimeout(
   taskId: string,
+  userId: string,
   prompt: string,
   repoUrl: string,
   selectedAgent: string = 'claude',
@@ -159,7 +187,7 @@ async function processTaskWithTimeout(
 
   try {
     await Promise.race([
-      processTask(taskId, prompt, repoUrl, selectedAgent, selectedModel, installDependencies, maxDuration),
+      processTask(taskId, userId, prompt, repoUrl, selectedAgent, selectedModel, installDependencies, maxDuration),
       timeoutPromise,
     ])
 
@@ -220,6 +248,7 @@ async function isTaskStopped(taskId: string): Promise<boolean> {
 
 async function processTask(
   taskId: string,
+  userId: string,
   prompt: string,
   repoUrl: string,
   selectedAgent: string = 'claude',
@@ -262,6 +291,7 @@ async function processTask(
     const sandboxResult = await createSandbox(
       {
         taskId,
+        userId,
         repoUrl,
         timeout: `${maxDuration}m`,
         ports: [3000],
@@ -359,7 +389,7 @@ async function processTask(
     }
 
     const agentResult = await Promise.race([
-      executeAgentInSandbox(sandbox, prompt, selectedAgent as AgentType, logger, selectedModel),
+      executeAgentInSandbox(sandbox, userId, prompt, selectedAgent as AgentType, logger, selectedModel),
       agentTimeoutPromise,
     ])
 
