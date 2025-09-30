@@ -99,6 +99,19 @@ export function HomePageHeader({ selectedOwner, selectedRepo, onOwnerChange, onR
     }
   }
 
+  const handleLogin = async () => {
+    try {
+      const { signInWithGoogle } = await import('@/lib/auth')
+      const data = await signInWithGoogle()
+      if (data?.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      toast.error('Failed to initiate login')
+    }
+  }
+
   const actions = isLoggedIn ? (
     <div className="flex items-center gap-2">
       {/* More Actions Menu */}
@@ -125,12 +138,12 @@ export function HomePageHeader({ selectedOwner, selectedRepo, onOwnerChange, onR
       </DropdownMenu>
     </div>
   ) : (
-    <Link
-      href="https://www.browzy.ai/auth"
-      className="text-base text-muted-foreground hover:text-foreground transition-colors"
+    <button
+      onClick={handleLogin}
+      className="text-base text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
     >
       Login
-    </Link>
+    </button>
   )
 
   const leftActions = (
