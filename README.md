@@ -1,20 +1,20 @@
-# Coding Agent Template
+# BrowzyCode Agent Template
 
-A template for building AI-powered coding agents that supports Claude Code, OpenAI's Codex CLI, Cursor CLI, and opencode with [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) to automatically execute coding tasks on your repositories.
+A template for building AI-powered coding agents that supports Claude Code, OpenAI's Codex CLI, Cursor CLI, and opencode with [BrowzyCode Sandbox](https://code.browzy.ai) to automatically execute coding tasks on your repositories.
 
 ![Coding Agent Template Screenshot](screenshot.png)
 
 ## Deploy Your Own
 
-You can deploy your own version of the coding agent template to Vercel with one click:
+You can deploy your own version of the coding agent template to BrowzyCode:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fcoding-agent-template&env=POSTGRES_URL,ANTHROPIC_API_KEY,GITHUB_TOKEN,VERCEL_TEAM_ID,VERCEL_PROJECT_ID,VERCEL_TOKEN,AI_GATEWAY_API_KEY,CURSOR_API_KEY,NPM_TOKEN&envDescription=Environment+variables+for+the+coding+agent+template.+AI_GATEWAY_API_KEY+is+required+for+branch+name+generation+and+Codex+agent.+CURSOR_API_KEY+and+NPM_TOKEN+are+optional.&project-name=coding-agent-template&repository-name=coding-agent-template)
+Visit [code.browzy.ai](https://code.browzy.ai) to get started with your own instance.
 
 ## Features
 
 - **Multi-Agent Support**: Choose from Claude Code, OpenAI Codex CLI, Cursor CLI, or opencode to execute coding tasks
-- **Vercel Sandbox**: Runs code in isolated, secure sandboxes ([docs](https://vercel.com/docs/vercel-sandbox))
-- **AI Gateway Integration**: Built for seamless integration with [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) for model routing and observability
+- **BrowzyCode Sandbox**: Runs code in isolated, secure sandboxes ([docs](https://code.browzy.ai))
+- **AI Gateway Integration**: Built for seamless integration with BrowzyCode AI Gateway for model routing and observability
 - **AI-Generated Branch Names**: Automatically generates descriptive Git branch names using AI SDK 5 + AI Gateway
 - **Task Management**: Track task progress with real-time updates
 - **Persistent Storage**: Tasks stored in Neon Postgres database
@@ -26,7 +26,7 @@ You can deploy your own version of the coding agent template to Vercel with one 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/vercel-labs/coding-agent-template.git
+git clone https://github.com/browzy-labs/coding-agent-template.git
 cd coding-agent-template
 ```
 
@@ -49,9 +49,9 @@ Required environment variables:
 - `POSTGRES_URL`: Your PostgreSQL connection string (works with any PostgreSQL database)
 - `ANTHROPIC_API_KEY`: Your Anthropic API key for Claude
 - `GITHUB_TOKEN`: GitHub personal access token (for repository access)
-- `VERCEL_TEAM_ID`: Your Vercel team ID
-- `VERCEL_PROJECT_ID`: Your Vercel project ID
-- `VERCEL_TOKEN`: Your Vercel API token
+- `BROWZYCODE_TEAM_ID`: Your BrowzyCode team ID
+- `BROWZYCODE_PROJECT_ID`: Your BrowzyCode project ID
+- `BROWZYCODE_TOKEN`: Your BrowzyCode API token
 - `AI_GATEWAY_API_KEY`: Your AI Gateway API key for AI-generated branch names and Codex agent support
 
 Optional environment variables:
@@ -87,7 +87,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 1. **Task Creation**: When you submit a task, it's stored in the database
 2. **AI Branch Name Generation**: AI SDK 5 + AI Gateway automatically generates a descriptive branch name based on your task (non-blocking using Next.js 15's `after()`)
-3. **Sandbox Setup**: A Vercel sandbox is created with your repository
+3. **Sandbox Setup**: A BrowzyCode sandbox is created with your repository
 4. **Agent Execution**: Your chosen coding agent (Claude Code, Codex CLI, Cursor CLI, or opencode) analyzes your prompt and makes changes
 5. **Git Operations**: Changes are committed and pushed to the AI-generated branch
 6. **Cleanup**: The sandbox is shut down to free resources
@@ -99,9 +99,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - `POSTGRES_URL`: PostgreSQL connection string
 - `ANTHROPIC_API_KEY`: Claude API key
 - `GITHUB_TOKEN`: GitHub token for repository access
-- `VERCEL_TEAM_ID`: Vercel team ID for sandbox creation
-- `VERCEL_PROJECT_ID`: Vercel project ID for sandbox creation
-- `VERCEL_TOKEN`: Vercel API token for sandbox creation
+- `BROWZYCODE_TEAM_ID`: BrowzyCode team ID for sandbox creation
+- `BROWZYCODE_PROJECT_ID`: BrowzyCode project ID for sandbox creation
+- `BROWZYCODE_TOKEN`: BrowzyCode API token for sandbox creation
 - `AI_GATEWAY_API_KEY`: AI Gateway API key for branch name generation and Codex agent support
 
 ### Optional
@@ -111,7 +111,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## AI Branch Name Generation
 
-The system automatically generates descriptive Git branch names using AI SDK 5 and Vercel AI Gateway. This feature:
+The system automatically generates descriptive Git branch names using AI SDK 5 and BrowzyCode AI Gateway. This feature:
 
 - **Non-blocking**: Uses Next.js 15's `after()` function to generate names without delaying task creation
 - **Descriptive**: Creates meaningful branch names like `feature/user-authentication-A1b2C3` or `fix/memory-leak-parser-X9y8Z7`
@@ -131,9 +131,9 @@ The system automatically generates descriptive Git branch names using AI SDK 5 a
 - **Frontend**: Next.js 15, React 19, Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Database**: PostgreSQL with Drizzle ORM
-- **AI SDK**: AI SDK 5 with Vercel AI Gateway integration
+- **AI SDK**: AI SDK 5 with BrowzyCode AI Gateway integration
 - **AI Agents**: Claude Code, OpenAI Codex CLI, Cursor CLI, opencode
-- **Sandbox**: [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox)
+- **Sandbox**: [BrowzyCode Sandbox](https://code.browzy.ai)
 - **Git**: Automated branching and commits with AI-generated branch names
 
 ## Development
@@ -177,5 +177,5 @@ pnpm start
 - **Environment Variables**: Never commit `.env` files to version control. All sensitive data should be stored in environment variables.
 - **API Keys**: Rotate your API keys regularly and use the principle of least privilege.
 - **Database Access**: Ensure your PostgreSQL database is properly secured with strong credentials.
-- **Vercel Sandbox**: Sandboxes are isolated but ensure you're not exposing sensitive data in logs or outputs.
+- **BrowzyCode Sandbox**: Sandboxes are isolated but ensure you're not exposing sensitive data in logs or outputs.
 - **GitHub Token**: Use a personal access token with minimal required permissions for repository access.
