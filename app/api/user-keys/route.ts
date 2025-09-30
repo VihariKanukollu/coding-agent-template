@@ -9,30 +9,52 @@ const getAdminClient = () => createAdminClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Encryption key - should be stored in environment variables (base64 encoded)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!
+const ALGORITHM = 'aes-256-gcm'
 
-function encrypt(text: string): { encrypted: string; iv: string } {
-  const iv = crypto.randomBytes(16)
-  const cipher = crypto.createCipheriv(
-    'aes-256-cbc',
-    Buffer.from(ENCRYPTION_KEY, 'base64'),
-    iv
-  )
-  let encrypted = cipher.update(text, 'utf8', 'hex')
-  encrypted += cipher.final('hex')
-  return { encrypted, iv: iv.toString('hex') }
+function getEncryptionKey(): Buffer {
+  const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY
+  if (!ENCRYPTION_KEY) {
+    throw new Error('ENCRYPTION_KEY is required')
+  }
+  
+  const key = Buffer.from(ENCRYPTION_KEY, 'base64')
+  
+  if (key.length !== 32) {
+    throw new Error('ENCRYPTION_KEY must be 32 bytes long')
+  }
+  
+  return key
 }
 
-function decrypt(encrypted: string, ivHex: string): string {
+function encrypt(text: string): { encrypted: string; iv: string } {
+  const key = getEncryptionKey()
+  const iv = crypto.randomBytes(16)
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
+
+  let encrypted = cipher.update(text, 'utf8', 'hex')
+  encrypted += cipher.final('hex')
+
+  const authTag = cipher.getAuthTag()
+  const encryptedWithTag = encrypted + ':' + authTag.toString('hex')
+
+  return {
+    encrypted: encryptedWithTag,
+    iv: iv.toString('hex'),
+  }
+}
+
+function decrypt(encryptedData: string, ivHex: string): string {
+  const key = getEncryptionKey()
+  const [encrypted, authTagHex] = encryptedData.split(':')
   const iv = Buffer.from(ivHex, 'hex')
-  const decipher = crypto.createDecipheriv(
-    'aes-256-cbc',
-    Buffer.from(ENCRYPTION_KEY, 'base64'),
-    iv
-  )
+  const authTag = Buffer.from(authTagHex, 'hex')
+
+  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
+  decipher.setAuthTag(authTag)
+
   let decrypted = decipher.update(encrypted, 'hex', 'utf8')
   decrypted += decipher.final('utf8')
+
   return decrypted
 }
 

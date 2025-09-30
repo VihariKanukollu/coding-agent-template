@@ -7,17 +7,35 @@ const getAdminClient = () =>
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!
+const ALGORITHM = 'aes-256-gcm'
 
-function decrypt(encrypted: string, ivHex: string): string {
+function getEncryptionKey(): Buffer {
+  const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY
+  if (!ENCRYPTION_KEY) {
+    throw new Error('ENCRYPTION_KEY is required')
+  }
+  
+  const key = Buffer.from(ENCRYPTION_KEY, 'base64')
+  
+  if (key.length !== 32) {
+    throw new Error('ENCRYPTION_KEY must be 32 bytes long')
+  }
+  
+  return key
+}
+
+function decrypt(encryptedData: string, ivHex: string): string {
+  const key = getEncryptionKey()
+  const [encrypted, authTagHex] = encryptedData.split(':')
   const iv = Buffer.from(ivHex, 'hex')
-  const decipher = crypto.createDecipheriv(
-    'aes-256-cbc',
-    Buffer.from(ENCRYPTION_KEY, 'base64'),
-    iv
-  )
+  const authTag = Buffer.from(authTagHex, 'hex')
+
+  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
+  decipher.setAuthTag(authTag)
+
   let decrypted = decipher.update(encrypted, 'hex', 'utf8')
   decrypted += decipher.final('utf8')
+
   return decrypted
 }
 
