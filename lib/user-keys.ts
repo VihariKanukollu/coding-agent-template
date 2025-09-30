@@ -53,10 +53,14 @@ export async function getUserApiKey(
       .single()
 
     if (error || !data) {
+      console.log(`No ${provider} key found for user ${userId}`)
       return null
     }
 
-    return decrypt(data.encrypted_key, data.iv)
+    console.log(`Decrypting ${provider} key - encrypted length:`, data.encrypted_key.length, 'iv length:', data.iv.length)
+    const decrypted = decrypt(data.encrypted_key, data.iv)
+    console.log(`Decrypted ${provider} key - first 10 chars:`, decrypted.substring(0, 10))
+    return decrypted
   } catch (error) {
     console.error(`Error fetching ${provider} key for user ${userId}:`, error)
     return null
