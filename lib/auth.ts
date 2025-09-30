@@ -7,8 +7,12 @@ export async function signInWithGoogle() {
     throw new Error('Supabase is not configured')
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-    (typeof window !== 'undefined' ? window.location.origin : 'https://code.browzy.ai')
+  // Always use the current window origin to ensure correct redirect
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://code.browzy.ai')
+
+  console.log('OAuth redirect will be:', `${baseUrl}/auth/callback`)
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
