@@ -9,14 +9,14 @@ const getAdminClient = () => createAdminClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Encryption key - should be stored in environment variables
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex')
+// Encryption key - should be stored in environment variables (base64 encoded)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!
 
 function encrypt(text: string): { encrypted: string; iv: string } {
   const iv = crypto.randomBytes(16)
   const cipher = crypto.createCipheriv(
     'aes-256-cbc',
-    Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
+    Buffer.from(ENCRYPTION_KEY, 'base64'),
     iv
   )
   let encrypted = cipher.update(text, 'utf8', 'hex')
@@ -28,7 +28,7 @@ function decrypt(encrypted: string, ivHex: string): string {
   const iv = Buffer.from(ivHex, 'hex')
   const decipher = crypto.createDecipheriv(
     'aes-256-cbc',
-    Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
+    Buffer.from(ENCRYPTION_KEY, 'base64'),
     iv
   )
   let decrypted = decipher.update(encrypted, 'hex', 'utf8')

@@ -6,14 +6,19 @@ export async function GET() {
   try {
     // Get authenticated user
     const supabase = await createClient()
-    const { data: { user: authUser } } = await supabase.auth.getUser()
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+    
+    console.log('GitHub user route - Auth user:', authUser?.id, 'Error:', authError)
     
     if (!authUser?.id) {
+      console.log('No authenticated user found')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
     // Get user's GitHub token
     const githubToken = await getUserApiKey(authUser.id, 'github')
+    
+    console.log('GitHub token retrieved:', githubToken ? 'Found' : 'Not found')
     
     if (!githubToken) {
       return NextResponse.json({ error: 'GitHub token not configured. Please add it in Settings.' }, { status: 400 })

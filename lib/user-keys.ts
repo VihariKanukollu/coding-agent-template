@@ -13,7 +13,7 @@ function decrypt(encrypted: string, ivHex: string): string {
   const iv = Buffer.from(ivHex, 'hex')
   const decipher = crypto.createDecipheriv(
     'aes-256-cbc',
-    Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
+    Buffer.from(ENCRYPTION_KEY, 'base64'),
     iv
   )
   let decrypted = decipher.update(encrypted, 'hex', 'utf8')
